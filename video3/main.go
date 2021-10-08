@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"micro/video2/handlers"
+	hello "micro/video2/handlers"
+	world "micro/video3/handlers"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,13 +20,14 @@ func main() {
 	l := log.New(os.Stdout, "product-api", log.LstdFlags) //creating a new log
 
 	//we got the instance of struct in hh variable
-	hh := handlers.NewHello(l)
-	gh := handlers.NewBye(l)
+	//hh := handlers.NewHello(l)
+	ph := world.NewProducts(l)
+	gh := hello.NewBye(l)
 
 	//we create a new servvemux
 	//here we're not going to use the defaultservemux
 	sm := http.NewServeMux()
-	sm.Handle("/", hh)
+	sm.Handle("/", ph)
 	sm.Handle("/goodbye", gh)
 
 	//we pass our custom mux here with handle

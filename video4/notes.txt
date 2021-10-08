@@ -1,0 +1,15 @@
+1. restful api
+2. use post to create a resource, use put to update something - right way to do things
+3. reading json
+4. fromjson func in data/products
+5. using regular expression
+
+curl -v localhost:9090/1 -XPUT | jq
+
+-v --verbose mode which we dont need
+
+6. addProduct method
+7. data/products.go requires update product func
+-UpdateProduct
+-findProduct
+-var ErrProductNotFound
