@@ -1,0 +1,4 @@
+documenting restful api with swagger
+
+command for swagger documenting tool installer:
+go get -u github.com/go-swagger/go-swagger/cmd/swagger 

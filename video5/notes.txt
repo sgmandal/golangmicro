@@ -27,3 +27,6 @@ putrouter.Use() - main.go
 
 middleware will get executed before the handler
 
+get:curl localhost:9090
+put:curl localhost:9090/1 -XPUT -d '{"name":"tea"}'
+post:curl localhost:9090 -XPOST -d '{"name":"water"}'

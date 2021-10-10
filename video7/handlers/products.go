@@ -1,9 +1,23 @@
+//	Pakcgae Classification of Product API
+//
+//	Documentation for Product API
+//	Schemes: http
+//	BasePath: /
+//	Version: 1.0.0
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+
 package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"micro/video4/data"
+	"micro/video7/data"
 	"net/http"
 	"strconv"
 
@@ -92,6 +106,18 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 		err := prod.FromJSON(r.Body)
 		if err != nil {
 			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+			return
+		}
+
+		//validate the product
+		err = prod.Validate()
+		if err != nil {
+			p.l.Println(err)
+			http.Error(
+				rw,
+				fmt.Sprintf("error validating product: %s", err),
+				http.StatusBadRequest,
+			)
 			return
 		}
 

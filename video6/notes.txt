@@ -1,0 +1,4 @@
+json validation
+
+installation of package:
+https://github.com/go-playground/validator
