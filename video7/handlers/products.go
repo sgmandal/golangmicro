@@ -1,15 +1,26 @@
-//	Pakcgae Classification of Product API
+// Package classification awesome.
 //
-//	Documentation for Product API
-//	Schemes: http
-//	BasePath: /
-//	Version: 1.0.0
+// Documentation of our awesome API.
 //
-//	Consumes:
-//	- application/json
+//     Schemes: http
+//     BasePath: /
+//     Version: 1.0.0
+//     Host: some-url.com
 //
-//	Produces:
-//	- application/json
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - basic
+//
+//    SecurityDefinitions:
+//    basic:
+//      type: basic
+//
+// swagger:meta
 
 package handlers
 
@@ -17,9 +28,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"micro/video7/data"
 	"net/http"
 	"strconv"
+	"video7/data"
 
 	"github.com/gorilla/mux"
 )
@@ -32,15 +43,10 @@ func NewProducts(x *log.Logger) *Products {
 	return &Products{x}
 }
 
-//while using gorillamux
-//I've noticed a slight difference
-//that difference is the method names, should be capital first letter
-
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
-	//handling get products
+
 	p.l.Println("handle GET products")
 
-	//fetch products from data package for now, or a database
 	lp := data.GetProducts()
 	err := lp.ToJSON(rw)
 	if err != nil {
@@ -52,7 +58,7 @@ func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("handle POST products")
 
-	prod := r.Context().Value(KeyProduct{}).(*data.Product) //casting it as data.Product
+	prod := r.Context().Value(KeyProduct{}).(*data.Product)
 
 	p.l.Printf("prod: %#v", prod)
 
@@ -60,7 +66,6 @@ func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("POST successful")
 }
 
-//method to update products
 func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -71,16 +76,7 @@ func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 
 	p.l.Println("method to handle PUT product", id)
 
-	//creating empty struct
-
-	//calling FromJson method created in data/products.go
-	//reading the data from request body with r.Body
-	//decoding from json
-	//testing for errors for decoding function if any
-	//now prod has data unmarshalled if no error is thrown
-
-	prod := r.Context().Value(KeyProduct{}).(*data.Product) //casting it as data.Product
-	//because it is of type interface, hence such conversion is required
+	prod := r.Context().Value(KeyProduct{}).(*data.Product)
 
 	err = data.UpdateProduct(id, prod)
 	if err == data.ErrorProductNotFound {
@@ -94,11 +90,6 @@ func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 type KeyProduct struct {
 }
 
-//validating the product
-//deserializing
-
-//to use context is to use key
-//we use types as key
 func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		prod := &data.Product{}
@@ -109,7 +100,6 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 			return
 		}
 
-		//validate the product
 		err = prod.Validate()
 		if err != nil {
 			p.l.Println(err)
@@ -121,7 +111,6 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 			return
 		}
 
-		//add product to the context
 		ctx := context.WithValue(r.Context(), KeyProduct{}, prod)
 		req := r.WithContext(ctx)
 

@@ -1,4 +1,9 @@
 documenting restful api with swagger
 
+note: instructor seem to be using zsh shell for windows, hence a lot of linux commands are seen to be executed without any problem
+
 command for swagger documenting tool installer:
-go get -u github.com/go-swagger/go-swagger/cmd/swagger 
+go get -u github.com/go-swagger/go-swagger/cmd/swagger
+
+swagger seems to be working on sample projects but not on this project for some reason
+I suspect there's a problem needed to be rectified in the main.go file of this project
