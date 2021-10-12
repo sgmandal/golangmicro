@@ -1,0 +1,6 @@
+access to the api using gorillamux
+
+has a react frontend, allowed access to it for the api using gorilla mux
+CORS
+
+access control problem is solved here

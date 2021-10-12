@@ -2,3 +2,26 @@ documenting restful api with swagger
 
 command for swagger documenting tool installer:
 go get -u github.com/go-swagger/go-swagger/cmd/swagger 
+
+Redoc middleware package with swagger.yaml
+
+github.com/go-openapi/runtime/middleware //for goswagger documentation
+
+serving files via go:
+
+handlefunc takes a function as input to trigger it
+handle is similar to handlefunc but simpler, no function is passed
+
+getrouter.handle("/swagger.yaml", http.FileServer(http.Dir("./")))
+
+gzipping
+
+what about the file or URI parameter in documentation
+
+swagger:route DELETE /products{id}
+
+swagger:parameters deleteProduct 
+
+swagger:model tag gives detailed and rich description
+
+Redoc allows to host the documentation
