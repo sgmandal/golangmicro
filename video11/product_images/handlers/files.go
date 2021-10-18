@@ -37,6 +37,19 @@ func (f *Files) RetardFunction(rw http.ResponseWriter, r *http.Request) {
 	f.saveFile(id, fn, rw, r)
 }
 
+//UploadMultipart something
+func (f *Files) UploadMultipart(rw http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(128 * 1024) //128kB
+	if err != nil {
+		f.log.Error("bad request", err)
+		http.Error(rw, "expected multipart data", http.StatusBadRequest)
+		return
+	}
+
+	id := r.FormValue("id")
+	f.log.Info("process form for id,", id)
+}
+
 func (f *Files) invalidURI(uri string, rw http.ResponseWriter) {
 	f.log.Error("invalid path", "path", uri)
 	http.Error(rw, "invaild file path should be in format /[id]/[filepath]", http.StatusBadRequest)

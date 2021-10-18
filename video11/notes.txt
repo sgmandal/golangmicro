@@ -1,0 +1,10 @@
+http multipart requests
+
+MDN web docs
+
+create a new subrouter
+rename two function, one is retardfunc and other as shwon in video for multipart
+
+CORS handler in gorilla mux for security 
+
+parsemultipart form - 
