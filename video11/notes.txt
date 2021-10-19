@@ -8,3 +8,5 @@ rename two function, one is retardfunc and other as shwon in video for multipart
 CORS handler in gorilla mux for security 
 
 parsemultipart form - 
+
+it is recommended to use RESTful approach and not the multipart way only when necessary

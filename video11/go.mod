@@ -3,6 +3,7 @@ module product_img
 go 1.16
 
 require (
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/nicholasjackson/env v0.6.0

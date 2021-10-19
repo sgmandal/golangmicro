@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
 	"path/filepath"
 	"product_img/product_images/files"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-hclog"
@@ -34,20 +36,35 @@ func (f *Files) RetardFunction(rw http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	f.saveFile(id, fn, rw, r)
+	f.saveFile(id, fn, rw, r.Body)
 }
 
 //UploadMultipart something
 func (f *Files) UploadMultipart(rw http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(128 * 1024) //128kB
+	err := r.ParseMultipartForm(128 * 1024) //128kB, writing to disc, from http.Request function
 	if err != nil {
 		f.log.Error("bad request", err)
 		http.Error(rw, "expected multipart data", http.StatusBadRequest)
 		return
 	}
 
-	id := r.FormValue("id")
+	id, iderr := strconv.Atoi(r.FormValue("id")) //string to integer conversion
+	if iderr != nil {
+		f.log.Error("bad request", err)
+		http.Error(rw, "expected integer id", http.StatusBadRequest)
+		return
+	}
 	f.log.Info("process form for id,", id)
+
+	//he has same error
+	ff, mh, err := r.FormFile("file")
+	if err != nil {
+		f.log.Error("bad request", err)
+		http.Error(rw, "expected multipart data", http.StatusBadRequest)
+		return
+	}
+
+	f.saveFile(r.FormValue("id"), mh.Filename, rw, ff) //saving the file
 }
 
 func (f *Files) invalidURI(uri string, rw http.ResponseWriter) {
@@ -55,11 +72,11 @@ func (f *Files) invalidURI(uri string, rw http.ResponseWriter) {
 	http.Error(rw, "invaild file path should be in format /[id]/[filepath]", http.StatusBadRequest)
 }
 
-func (f *Files) saveFile(id, path string, rw http.ResponseWriter, r *http.Request) { // id and path is of typestring
+func (f *Files) saveFile(id, path string, rw http.ResponseWriter, r io.ReadCloser) { // id and path is of typestring
 	f.log.Info("save file for product", "id", id, "path", path)
 
-	fp := filepath.Join(id, path)   //getting relative path
-	err := f.store.Save(fp, r.Body) //calling the storing interface
+	fp := filepath.Join(id, path) //getting relative path
+	err := f.store.Save(fp, r)    //calling the storing interface
 	// assumption says if any Save method is written, it gets called here
 	// the method is implemented in storage interface
 	// hence we dont care what the internal components of save are
