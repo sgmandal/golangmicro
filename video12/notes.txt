@@ -1,2 +1,2 @@
-gzipping, grpc
+gzipping
 
