@@ -1,14 +1,18 @@
+// header
 syntax = "proto3";
 
+// grpc service definition
 service Currency {
     rpc GetRate(RateRequest) returns (RateResponse);
 }
 
+// data store denoted by message keyword
 message RateRequest {
     string Base = 1;
     string Destination = 2;
 }
 
+// same data store definition
 message RateResponse {
     float rate = 1;
 }
