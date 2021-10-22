@@ -1,0 +1,18 @@
+grpc and protocol buffers or protobufs binary based message service
+
+binary based remote procedure calls are fast
+
+Protocol buffers are Google's language-neutral, platform-neutral, extensible mechanism for serializing structured data – think XML, but smaller, faster, and simpler. You define how you want your data to be structured once, then you can use special generated source code to easily write and read your structured data to and from a variety of data streams and using a variety of languages.
+
+protobuf I think requires an installation
+
+grpcurl --plaintext localhost:9092 list
+
+https://github.com/fullstorydev/grpcurl - add $HOME/go/bin to $PATH in ~/.bashrc or ~/.profile
+
+source ~/.bashrc  --- source ~/.profile
+
+server doesnt support the reflection api
+
+reflection.Register(gs)
+
