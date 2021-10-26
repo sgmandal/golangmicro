@@ -1,0 +1,3 @@
+bi directional data streaming
+
+i.e., stream sending and stream receiving
