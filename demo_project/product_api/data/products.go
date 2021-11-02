@@ -1,6 +1,11 @@
 package data
 
-import "github.com/hashicorp/go-hclog"
+import (
+	"context"
+	"demo/product_api/currencies/protos/currency"
+
+	"github.com/hashicorp/go-hclog"
+)
 
 type product struct {
 
@@ -13,13 +18,34 @@ type product struct {
 }
 
 type ProductsDB struct {
-	log hclog.Logger
+	current currency.CurrencyClient
+	log     hclog.Logger
+	rt      map[string]float64
+	client1 currency.Currency_SubscribeRatesClient
 }
 
 // a setter function which provides access to this program
 // or the struct and its methods present in this file or package
-func NewProductDB(l hclog.Logger) *ProductsDB {
-	return &ProductsDB{l}
+func NewProductDB(c currency.CurrencyClient, l hclog.Logger) *ProductsDB {
+	pb := &ProductsDB{current: c, log: l, rt: make(map[string]float64), client1: nil}
+	// updateHandler
+	return
+}
+
+func (p *ProductsDB) apdateHandler() {
+	xs, err := p.current.SubscribeRates(context.Background()) // what does this return? an interface
+	if err != nil {
+		p.log.Error("error receiving message", "error", err)
+	}
+
+	p.client1 = xs
+	for {
+		rr, err := xs.Recv()
+		if grperr := rr.GetError(); grperr != nil {
+			p.log.Info("error subscribing for rates", grperr)
+			continue
+		}
+	}
 }
 
 // helper function,
