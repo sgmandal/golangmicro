@@ -92,6 +92,9 @@ func (cx *currency2) GetRate(ctx context.Context, rr *currency.RateRequest) (*cu
 }
 
 // not understood this method
+// doubt, this method is not implementing the currency.pb.go method
+// how is it getting used
+// assumption: maybe it doesn't depend upon what is returned or passed
 func (cx *currency2) SubscribeRates(ls currency.Currency_SubscribeRatesServer) error {
 	for {
 		rr, err := ls.Recv()

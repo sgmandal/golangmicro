@@ -1,0 +1,283 @@
+what did we uderstand from this mini project
+
+1. protocol buffers
+
+enum in protocol buffers are the ones which values are expected, anyone might be from the given list
+
+example USD is listed hence it might be used
+
+(we've used protocol buffers version 3 in this code)
+
+protocol buffers helps creating a remote procedure call service, in our case we count currencies folder as a server running and serving upon port 9092 and client as product api
+
+firstly we define message in .proto file, which is nothing but the data container which can be used for exchange
+
+then we generate a go program from .proto file also known as stub, this stub is used as a rpc communication medium between client and server
+
+example we've defined two messages, rateresponse and raterequest, and services as GetRate, we get messages as formatted by RateResponse and we send data in form of raterequest
+
+the data package in currencies just provide the rate dataset to be used incase of golang(i.e conversion from xml to given struct from a given website of a certain bank) and it is called once while launching the server, it also contains two methods additionally known as GetRae which gets the relation or the equivalent rates between two currencies_types for example rate between USD and INR, other is monitor rates which mimics the behaviour of fetching the data again and again from the server, we just see small yet random change with time, both are added to the structure ExchangeRates as a method hence we can call them using ExchangeRates's instance
+
+this was all about data package
+
+coming to server package
+
+once we call the setter function which is NewCurrency1() it calls handleUpdates method
+
+handle updates method calls a method in data package known as MonitorRates which mimics the changes made to the currency rate, it returns a channel of struct, this struct is of one use which is sending the count using channel
+
+we range over channels, as we receive updated rates each time
+
+we have our subscriptions variable of type map[currency.CurrencySubscribeRateServer][]*currency.raterequest
+
+map[string]float64 - example - x["hello"] = 5
+
+map[interface] = {addr of raterequest,addr of raterequest,addr of raterequest,addr of raterequest}
+
+we range over suscriptions where []*currency.raterequest is a slice storing many raterequest which we got from the stub, stub acts as an interface between client and server and right now we're working with server i.e building and understanding server
+
+line 36, x stores the interface instance/reference, andv stores slice of currency package raterequest got from the stub
+
+now we loop over slice of raterequest, we call the GetRae function, which gives us relation between two rates
+and then we send each response to the stream using send function, this was all about handleupdate method
+
+additionally we have two methods here which were defined as a service in .protos file as we implement the interface here for the stub's usage
+
+for now I'm assuming the GetRate method doesnt have any usage by the client because this project was all about bidirectional streaming as we saw handleupdate method only had Send method which is used for sending the data or streaming the data with each loop
+
+coming to getrate method - 
+as said before an interface in currency package i.e currency.pb.go is implemented as we've defined a service known as GetRate
+
+first line just logs that it's handling getrate, with base and destination strings
+
+if base and destination strings are same, return an rpc error
+and return no rateresponse and an error 
+
+else we call GetRae function which returns relation between two currencies
+and then we return a rateresponse
+
+all done about the GetRate service or rpc call
+
+now coming to SubscribeRates rpc call
+(assumption: we talked about handleUpdates method, we come to line 36, we know we've declared subscriptions variable but it is empty, so we fill it up using SubscribeRates method)
+we have an infinite for loop making it a sending and receiving streaming data
+
+we receive raterequest as rr from recv method, so we really get the data from the stub we've created before which acts as a communicaition medium between client and server
+
+we have xrs variable which stores subscription[ls] where ls was passed in the method as parameter, ls is just a reference for the interface Currency_SubscribeRatesServer
+ok variable returns true if the data is present
+
+here we catch the slice of raterequest with the key of ls, first we check if that's really empty, xrs is assigned as empty slice of raterequest
+
+now we loop over the raterequest xrs which was previously stored in subscription, we check if the stored base and received base and same with destination we throw an rpc error
+
+if no errors
+we append xrs with the received raterequest, hence we get an appended slice of raterequest, and then we update the subscription map or just replace with the given instance
+
+hence subscriberates service is understood, it feeds the empty subscription variable created in currency2 struct and then fed to handleupdates method, which runs concurrently
+
+the monitorrates function works directly on the data received from the bank, so no confusion in that point
+
+we just get the names of the currencies from the client and we process it in the server and return the rate we processed in the server from the bank and return it
+
+in main.go first we fetch newrates and make an instance
+
+we create a new grpc server
+
+we call the NewCurrency1 method which executes handleUpdate concurrently
+
+we connect NewCurrency1 and grpc server with the stub, here the GetRate and SubscribeRates service is implemented and fetched
+
+next line is idionatic i.e reflection package
+
+and finally, serve
+
+Client side programming
+
+products.go
+defining ErrorProductNotFound we define a variable with type error which returns product not found
+we have type product struct with its json key given and json validation which executes in validate.go function
+
+multiproduct variable is of type slice of product struct defined above
+
+defined another struct known as ProductsDB which has currencyClient for stub connection, rt map string float64 to hold the values of subscribed rates and another reference to Currency_SubscribeRatesServer for reciving the stream data from the struct
+
+connector function known as NewProductsDB which initializes the empty struct, calls apdateHandler function which is a helper function in concurrent fashion because it has infinite for loop running
+
+(p *ProductsDB) apdateHandler()
+
+this method is a helper function, running in concurrent fashion
+first it calls the SubscribeRates interface implementation(CurrencyClient interface), and that returns an interface, note that at the grpc server side programming we implement CurrencyServer interface, and at client side we call the CurrencyClient interface, now that method returns another interface containing methods such as Send, Recv which are builtin to the stub, obviously Send is used to send some stream data, Send could be of many number, and we have streaming response from Recv
+Now we got the interface namely Currency_SubscribeRatesClient which contains Send, Recv instances that we can call to get the data
+xs now is the Currency_SubscribeRatesClient reference ut containing a grpc connection, hence ProductsDB client1 reference/variable is of same type, so next we assign this connection client1 as their of same type
+we receive StreamingRateResponse struct reference and store it to rr, we check error as rr.GetError, now we call GetRateResponse method attached to it, we receive a struct containing base, destination and rate, we store the rate and cache it
+(p *ProductsDB) apdateHandler() - END
+
+(pb *ProductsDB) GetProductById(id int, currency1 string) (*product, error)
+Method helps to find product by ID
+
+we find index of product we want from productList
+
+if currency string is empty, we return the desired product based on index/id
+
+if currency is present, we fetch rate using getRate function passing currency string variable into it
+we make a copy of productList, modifying the rate, and returning the copy
+
+(pb *ProductsDB) GetProductById(id int, currency1 string) (*product, error) - END
+checking if the ID exists in the database or not using findIndexByProductID function
+we check error if returned is -1 then ErrorProductNotFound error is returned
+if currency1 string passed into the method is empty, return productlist as it is
+oftherwise we get rate of that currency, create a copy of productList, multiply the rates we fetched
+and return that copy with new rates
+
+(pb *ProductsDB) UpdateProduct(x product) error
+first we check the product exists or not using findIndexByProductID and return index
+then we update the whole thing, replacing with the struct just passed down
+(pb *ProductsDB) UpdateProduct(x product) error - END
+
+(pb *ProductsDB) AddProduct(x product)
+firstly we calculate max_id, ID follows incrementing order
+we modify the incoming ID with this and append that to our database
+(pb *ProductsDB) AddProduct(x product) - END
+
+(pb *ProductsDB) DeleteProduct(id int) error
+first we find index using findIndexByProductID
+then we delete that entry using concept of slicing
+(pb *ProductsDB) DeleteProduct(id int) error - END
+
+
+findIndexByProductID(x int) int
+This function is used to check if the given or passed id is present in productList or not
+works as such:-
+ranges over productList
+if got ID it returns that ID or returns -1
+-1 is checked in main function, if yes then ID not found
+and returns index
+findIndexByProductID(x int) int - END
+
+var productList = []*product
+This is the static database we created for testing purposes, it contains a few sample entries
+var productList = []*product - END
+
+(*ProductsDB) GetProduct(currency string)
+(multiproduct, error ) - return type of the method where as we know multiproduct is a slice of product struct, i.e., multiproduct can store multiple product struct instances, just as a json file with separated with comma
+
+first it checks whether the string i.e., currency variable passed is empty or not, if its empty then productList i.e., the initialization of struct is returned i.e., the base dataset we initialized and function gets terminated here
+if not we call the getRate function - 
+(pb *ProducttsDB) getRate(dest string) (float64, error)
+// this helper function's sloe goal is to fetch the currency rate from the server stub connections
+first it checkts for the existence of dest string in the map of rates in ProductsDB, if an instance is present, it returns the float64 value on the map and the method gets terminated
+else it creates a request for the stub as currency package RateRequest{with Base and Destination currencies with proper formatting as given in the stub}
+then we call the GetRate function we've written in the server side programming(we've written the working of GetRate function before, like in the upper part of this notes, refer that for it working)
+we get res struct and error as output, we check error as usual 
+we store the rate in rt map and subscribe to the same raterequest and then we return that rate
+
+now we got rate in GetProduct function, we create a copy of productList so our productList is undisturbed, we update the pricings which is based upon EUR currency type as base currency and we append that to multiproduct{} struct and return it with updated value
+
+(*ProductsDB) GetProduct(currency string) - END
+
+(have a doubt here about leaking goroutines)
+
+validation.go
+as studied beofre, validation code was written within products.go but for simplicity it was moved in a different file but same package, here we write custom validation codes for validating the json files which were recieved in a given format, this syntax is followed for each such validation
+
+handlers/products.go
+getProductID(r *http.Request) int
+A simplified helper function so that we wont need to write this part of code again and again whenever we need id from a request
+gorilla mux package provided with a function named as Vars which convert request into go data structure
+vars["id"] stores id in string format hence we convert string to integer
+then we return id in integer format
+getProductID(r *http.Request) int - END
+handlers/products.go - END
+
+handlers/delete.go
+
+(p *Product1) Delete(rw http.ResponseWriter, r *http.Request)
+- This method is a handler function, handler functions are executed whenever they are called by the gorilla mux framework, whenever the main client requests it to do so, we have a lot of such handler functions such as get product, add product, etc. which we'll take a look when time comes, for now lets see how this Delete method works
+
+we fetch the id using a helper function we wrote as getProductID passing a http.request through it
+http.request may contain queries, URLs that the client put a request to, example of that we can say is when we execute curl command with given links and data, that part of data gets passed into the mux framework as http.request, hence we process it further as required, like using string slicing, or regular expression, or even using http package's simplified method available to fetch something, like queries().get() for example to fetch query attached to it
+
+after fetching id we call DeleteProduct() with id as parameter, as discussed before it uses slicing concept in go and then we just check the error, a better error message we can write, the more its useful for client and us while testing and debugging
+finally we write http.StatusNoContent to idicate the job's done and there's nothing to pass
+(p *Product1) Delete(rw http.ResponseWriter, r *http.Request) - END
+
+handlers/delete.go - END
+
+handlers/get.go
+(p *Product1) ListAll(rw http.ResponseWriter, r *http.Request)
+c has the currency name in string format
+adding header type to response writer
+we fetch products from GetProduct() passing currency as parameter, working of GetProduct is explained in this document.
+and finally we write the response in json format on rw
+(p *Product1) ListAll(rw http.ResponseWriter, r *http.Request) - END
+
+(p *Product1) ListSingle(rw http.ResponseWriter, r *http.Request)
+we get productid using getProductID
+and then currency using the listAll method's format
+we call method GetProductById
+we use switch case to return an appropriate error with it
+finally, we print all that data to responsewriter(ToJSON line)
+(p *Product1) ListSingle(rw http.ResponseWriter, r *http.Request) - END
+handlers/get.go - END
+
+handlers/middleware.go
+middleware is a feature provided by gorillamux which is compiled first and then the given handler is executed
+middleware is genrally used for custom filtering or conversion of data
+here we use it for data validation purposes
+example we received a json data matching the requirement, but there's a catch, name of produuct which is set to required isnt received, so here we return an error saying this is unacceptable
+
+all this general coding is done in data/validation.go and handlers/middleware.go
+
+Assumption:- First it receives the product, covnerts it from json, and then validate it, after validation throws no error, it is passed on to handler which can be either put or post.go methods who does their respective jobs
+proudct after json serialization is now wrapped with context using the given syntax, and sent to put or post methods which we'll describe next
+
+(p *Product1) MiddlewareValidateProduct(next http.Handler) http.Handler
+this is the only known idiomatic way to write middleware validation, which returns an http handler
+inside that returned http.hander we code our middleware
+first we create a container named as prod where we would store our proudctList data which we received in Json format in request
+Then we use FromJSON method to convert data into go data structure hereby storing it into the container we defined earlier
+then we validate the prod struct using our validator that we wrone in data/validation.go
+as written before assumption, if name of product is required and not specified in input, Validate method throws such error
+if everything's good, the data is wrapped into context in given fashion, and middleware execution is then passed to the handler
+(p *Product1) MiddlewareValidateProduct(next http.Handler) http.Handler - END
+handlers/middleware.go - END
+
+handlers/post.go
+(p *Product1) Create(rw http.ResponseWriter, r *http.Request)
+unwrapping data that we wrapped in context in middleware that we wrote above
+we then add product to our database
+the reason we didnt get AddProduct return any error is, middleware couldve thrown an error if something was off, so an error filter is already in place, hence no need for error checking here
+finally StatusNoContent saying no content to add to responsewriter and everything is updated successfully
+(p *Product1) Create(rw http.ResponseWriter, r *http.Request) - END
+handlers/post.go - END
+
+handlers/put.go
+(p *Product1) Update(rw http.ResponseWriter, r *http.Request)
+unwrapping the data that we wrapped into context which was done in middleware, we update the product using UpdateProduct method passing the struct as parameter
+we check convenient error such as if errorproductnotfound is thrown
+finally StatusNoContent saying no content to add to responsewriter and everything is updated successfully
+(p *Product1) Update(rw http.ResponseWriter, r *http.Request) - END
+handlers/post.go - END
+
+main.go
+we dont really have to use the env package which Jackson has used in his demonstration, at first he wasnt using any such packages to create a server
+
+main.go - END
+
+- see more examples of type assertion
+
+- dont get confused with client and server's implementation, both are operating independently and communicating to get what's required, nothing else, hence client might have many method names similar to that of currencies grpc server, but has nothing to do with it
+
+- need to cover up file handling and swagger documentation
+
+- we implement CurrencyServer interface in grpc server side program if we take a look at the stub, and for client we call the CurrencyClient interface i.e., SubscribeRates() method
+
+- Recv method at currencies/server is sued to get the raterequest, and recv method at client is used to fetch rateresponse that is the rate
+
+- Revision of Bi Directional streaming i.e., subscriberates server and its working
+
+- Need to study json validator throughly
+
+- HTTP Status 204 (No Content) indicates that the server has successfully fulfilled the request and that there is no content to send in the response payload bod
+
